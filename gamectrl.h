@@ -70,3 +70,74 @@ bool isWin(vector<string> map, vector<string> sourceMap)
   }
   return true;
 }
+
+bool hasSaveData()
+{
+  ifstream file("save.dat");
+  if (file.is_open())
+  {
+    // 第一行为playlist名
+    string playList, mapName;
+    getline(file, playList);
+    getline(file, mapName);
+    if (playList != "" && mapName != "")
+    {
+      file.close();
+      return true;
+    }
+  }
+  return false;
+}
+
+bool saveData(string playList, string mapName)
+{
+  ofstream file("save.dat");
+  if (file.is_open())
+  {
+    file << playList << endl;
+    file << mapName << endl;
+    file.close();
+    return true;
+  }
+  return false;
+}
+
+bool deleteSaveData()
+{
+  ofstream file("save.dat");
+  if (file.is_open())
+  {
+    file << "" << endl;
+    file << "" << endl;
+    file.close();
+    return true;
+  }
+  return false;
+}
+
+vector<string> loadSaveData()
+{
+  vector<string> saveData;
+  ifstream file("save.dat");
+  if (file.is_open())
+  {
+    string playList, mapName;
+    getline(file, playList);
+    getline(file, mapName);
+    saveData.push_back(playList);
+    saveData.push_back(mapName);
+    file.close();
+  }
+  return saveData;
+}
+
+void showCongratulations()
+{
+  system("cls");
+  COLOR_PRINT("____    ____  ______    __    __     ____    __    ____  __  .__   __. \n", 10);
+  COLOR_PRINT("\\   \\  /   / /  __  \\  |  |  |  |    \\   \\  /  \\  /   / |  | |  \\ |  | \n", 10);
+  COLOR_PRINT(" \\   \\/   / |  |  |  | |  |  |  |     \\   \\/    \\/   /  |  | |   \\|  | \n", 10);
+  COLOR_PRINT("  \\_    _/  |  |  |  | |  |  |  |      \\            /   |  | |  . `  | \n", 10);
+  COLOR_PRINT("    |  |    |  `--'  | |  `--'  |       \\    /\\    /    |  | |  |\\   | \n", 10);
+  COLOR_PRINT("    |__|     \\______/   \\______/         \\__/  \\__/     |__| |__| \\__| \n", 10);
+}

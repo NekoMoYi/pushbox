@@ -24,13 +24,41 @@ vector<string> getMapList()
       mapName = findData.cFileName;
       if (mapName != "." && mapName != "..")
       {
-        mapPath = mapDir + "\\" + mapName;
-        mapList.push_back(mapPath);
+        if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        {
+          mapPath = mapDir + "\\" + mapName;
+          mapList.push_back(mapPath);
+        }
       }
     } while (FindNextFileA(hFind, &findData));
     FindClose(hFind);
   }
   return mapList;
+}
+
+vector<string> getPlayLists(string playListDir){
+  vector<string> playLists;
+  string playListName;
+  string playListPath;
+  WIN32_FIND_DATAA findData;
+  HANDLE hFind = FindFirstFileA((playListDir + "\\*").c_str(), &findData);
+  if (hFind != INVALID_HANDLE_VALUE)
+  {
+    do
+    {
+      playListName = findData.cFileName;
+      if (playListName != "." && playListName != "..")
+      {
+        if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        {
+          playListPath = playListDir + "\\" + playListName;
+          playLists.push_back(playListPath);
+        }
+      }
+    } while (FindNextFileA(hFind, &findData));
+    FindClose(hFind);
+  }
+  return playLists;
 }
 
 vector<string> readMap(string mapPath)
@@ -48,6 +76,23 @@ vector<string> readMap(string mapPath)
     mapFile.close();
   }
   return map;
+}
+
+vector<string> readPlayList(string playListPath){
+  // cout<<playListPath<<endl;
+  vector<string> playList;
+  string line;
+  ifstream playListFile;
+  playListFile.open(playListPath.c_str());
+  if (playListFile.is_open())
+  {
+    while (getline(playListFile, line))
+    {
+      playList.push_back(line);
+    }
+    playListFile.close();
+  }
+  return playList;
 }
 
 string getMapName(string mapPath)

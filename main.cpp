@@ -14,7 +14,10 @@ void init();
 void mainMenu();
 void selectMap();
 void randomMap();
-void startGame(vector<string> map, string mapName);
+void startGame(vector<string> map, string mapName, bool inList);
+void selectPlayList();
+void playInList(vector<string> playList, string currentMap, string playListName);
+void continuePlayList();
 
 void init()
 {
@@ -29,6 +32,8 @@ void mainMenu()
   system("cls");
   hideCursor();
   int selected = 0;
+  if (!hasSaveData())
+    selected = 1;
   while (true)
   {
     setCursorPos(0, 0);
@@ -47,35 +52,28 @@ void mainMenu()
          << endl;
 
     COLOR_PRINT("Use <UP> <DOWN> <ENTER> to select\n\n", 8);
+    string options[] = {"Continue", "Start Game", "Random Map", "Select Map", "Exit"};
+    int num_options = sizeof(options) / sizeof(options[0]);
 
-    if (selected == 0)
+    for (int i = 0; i < num_options; i++)
     {
-      COLOR_PRINT("Random Map", 0, 15);
-      cout << endl;
-    }
-    else
-    {
-      COLOR_PRINT("Random Map", 15);
-      cout << endl;
-    }
-    if (selected == 1)
-    {
-      COLOR_PRINT("Select Map", 0, 15);
-      cout << endl;
-    }
-    else
-    {
-      COLOR_PRINT("Select Map", 15);
-      cout << endl;
-    }
-    if (selected == 2)
-    {
-      COLOR_PRINT("Exit", 0, 15);
-      cout << endl;
-    }
-    else
-    {
-      COLOR_PRINT("Exit", 15);
+      if (i == 0)
+      {
+        if (!hasSaveData())
+        {
+          COLOR_PRINT("Continue", 8);
+          cout << endl;
+          continue;
+        }
+      }
+      if (selected == i)
+      {
+        COLOR_PRINT(options[i].c_str(), 0, 15);
+      }
+      else
+      {
+        COLOR_PRINT(options[i].c_str(), 15);
+      }
       cout << endl;
     }
 
@@ -84,23 +82,32 @@ void mainMenu()
     case 72:
       selected--;
       if (selected < 0)
-        selected = 2;
+        selected = num_options - 1;
+      if (selected == 0 && !hasSaveData())
+        selected = num_options - 1;
       break;
     case 80:
       selected++;
-      if (selected > 2)
+      if (selected > num_options - 1)
         selected = 0;
+      if (selected == 0 && !hasSaveData())
+        selected = 1;
       break;
     case 13:
       switch (selected)
       {
       case 0:
-        randomMap();
-        break;
+        continuePlayList();
       case 1:
-        selectMap();
+        selectPlayList();
         break;
       case 2:
+        randomMap();
+        break;
+      case 3:
+        selectMap();
+        break;
+      case 4:
         exit(0);
         break;
       }
@@ -109,10 +116,11 @@ void mainMenu()
   }
 }
 
-void startGame(vector<string> map, string mapName)
+void startGame(vector<string> map, string mapName, bool inList)
 {
   vector<string> sourceMap = map;
   system("cls");
+  bool win = false;
   while (true)
   {
     setCursorPos(0, 0);
@@ -121,17 +129,34 @@ void startGame(vector<string> map, string mapName)
     renderMap(map);
     if (isWin(map, sourceMap))
     {
+      win = true;
       COLOR_PRINT("You Win!\n", 10);
-      COLOR_PRINT("Press <ENTER> to menu\n", 8);
-      while (true)
+      if (!inList)
       {
-        char ch = getch();
-        if (ch == 13)
+        COLOR_PRINT("Press <ENTER> to menu\n", 8);
+        while (true)
         {
-          mainMenu();
+          char ch = getch();
+          if (ch == 13)
+          {
+            mainMenu();
+          }
+        }
+      }
+      else
+      {
+        COLOR_PRINT("Press <ENTER> to next map\n", 8);
+        while (true)
+        {
+          char ch = getch();
+          if (ch == 13)
+          {
+            break;
+          }
         }
       }
     }
+    if(win) break;
     switch (getch())
     {
     case 27:
@@ -169,7 +194,9 @@ void startGame(vector<string> map, string mapName)
         char ch = getch();
         if (ch == 13)
         {
-          startGame(sourceMap, mapName);
+          map = sourceMap;
+          system("cls");
+          break;
         }
         else if (ch == 27)
         {
@@ -189,7 +216,7 @@ void randomMap()
   int mapIndex = rand() % mapList.size();
   string mapPath = mapList[mapIndex];
   vector<string> map = readMap(mapPath);
-  startGame(map, getMapName(mapPath));
+  startGame(map, getMapName(mapPath), false);
 }
 
 void selectMap()
@@ -238,10 +265,114 @@ void selectMap()
       else
       {
         vector<string> map = readMap(mapList[selectedMap]);
-        startGame(map, mapNameList[selectedMap]);
+        startGame(map, mapNameList[selectedMap], false);
       }
     }
   }
+}
+
+void selectPlayList()
+{
+  string playListDir = "playlists";
+  vector<string> playLists = getPlayLists(playListDir);
+  int playListCount = playLists.size();
+  int selectedPlayList = 0;
+  system("cls");
+  while (true)
+  {
+    setCursorPos(0, 0);
+    COLOR_PRINT("Use <UP> <DOWN> <ENTER> to select a playlist\n\n", 8);
+    for (int i = 0; i < playListCount; i++)
+    {
+      string playListDisplayName = playLists[i].substr(playListDir.length() + 1);
+      playListDisplayName = playListDisplayName.substr(0, playListDisplayName.length() - 4);
+      if (selectedPlayList == i)
+        COLOR_PRINT(playListDisplayName.c_str(), 0, 15);
+      else
+        COLOR_PRINT(playListDisplayName.c_str(), 15);
+      cout << endl;
+    }
+    cout << endl;
+    if (selectedPlayList == playListCount)
+      COLOR_PRINT("BACK", 0, 15);
+    else
+      COLOR_PRINT("BACK", 15);
+    cout << endl;
+
+    switch (getch())
+    {
+    case 72:
+      selectedPlayList--;
+      if (selectedPlayList < 0)
+        selectedPlayList = playListCount;
+      break;
+    case 80:
+      selectedPlayList++;
+      if (selectedPlayList > playListCount)
+        selectedPlayList = 0;
+      break;
+    case 13:
+      if (selectedPlayList == playListCount)
+        mainMenu();
+      else
+      {
+        vector<string> playList = readPlayList(playLists[selectedPlayList]);
+        if (hasSaveData())
+        {
+          COLOR_PRINT("You have save data, press <ENTER> to overwrite, <ESC> to cancel\n", 8);
+          while (true)
+          {
+            char ch = getch();
+            if (ch == 13)
+            {
+              break;
+            }
+            else if (ch == 27)
+            {
+              mainMenu();
+            }
+          }
+        }
+        playInList(playList, playList[0], playLists[selectedPlayList]);
+      }
+    }
+  }
+}
+
+void playInList(vector<string> playList, string currentMap, string playListName)
+{
+  for (int i = 0; i < playList.size(); i++)
+  {
+    if (playList[i] == currentMap)
+    {
+      for (int j = i; j < playList.size(); j++)
+      {
+        vector<string> map = readMap("maps/" + playList[j]);
+        saveData(playListName, playList[j]);
+        startGame(map, getMapName(playList[j]), true);
+      }
+    }
+  }
+  showCongratulations();
+  
+  COLOR_PRINT("\nCongratulations!\nYou have finished the playlist\n", 8);
+  COLOR_PRINT("Press <ENTER> to return to main menu\n", 8);
+  while (true)
+  {
+    char ch = getch();
+    if (ch == 13)
+    {
+      deleteSaveData();
+      mainMenu();
+    }
+  }
+}
+
+void continuePlayList(){
+  vector<string> saveData = loadSaveData();
+  string playListName = saveData[0];
+  string currentMap = saveData[1];
+  playInList(readPlayList(playListName), currentMap, playListName);
 }
 
 int main()
